@@ -163,10 +163,13 @@ file first; the level follows.
 
 ## Share your card
 
-Scored? Share it. The card contains only what you chose to put on it:
-name, species, optional birthday, level, and scores. It never contains
-memory or conversation text, and it carries the Pages address at the
-bottom left so anyone who sees it knows where to try it.
+Scored? Share it. The card is 1080 x 1920 (9:16) and contains only
+what you chose to put on it: name, species, optional birthday, level,
+and scores. It never contains memory or conversation text, and it
+carries the Pages address at the bottom left so anyone who sees it
+knows where to try it. The web version also has Share card (device
+share sheet with the PNG when available), Post on X, and Post on
+Reddit buttons next to "Copy share text".
 
 Suggested share text (the web version builds this for you with its
 "Copy share text" button):

@@ -88,6 +88,9 @@
   <button class="secondary" onclick="loadExample('fresh')">Load fresh agent example</button>
   <button id="btnDownload" onclick="downloadCard()" disabled>Download card PNG</button>
   <button id="btnShare" onclick="copyShareText()" disabled>Copy share text</button>
+  <button id="btnNativeShare" onclick="shareCard()" disabled>Share card</button>
+  <button id="btnX" onclick="postOnX()" disabled>Post on X</button>
+  <button id="btnReddit" onclick="postOnReddit()" disabled>Post on Reddit</button>
 </div>
 <p id="formError" class="error"></p>
 
@@ -96,8 +99,9 @@
   <b>Like your result? Share your card!</b>
   <p id="shareText"></p>
   <p class="note">The card contains only what you chose to put on it: name, species, optional birthday, level, and scores. It never contains your memory or conversation text.</p>
+  <p class="note">Share card uses your device share sheet with the PNG when available, otherwise it copies the share text. Post on X opens a prefilled post. Post on Reddit opens a prefilled link submission; for a Reddit image post, download the card PNG and upload it there.</p>
 </div>
-<canvas id="card" width="1200" height="1500" style="display:none"></canvas>
+<canvas id="card" width="1080" height="1920" style="display:none"></canvas>
 
 <p class="note">Privacy: this page has no backend and no tracking. Your input lives only in this browser tab and disappears when you close it. The only thing that ever leaves your device is the card image you download yourself.</p>
 
@@ -311,39 +315,48 @@ function preloadLogo() {
 function drawCard(profile, result) {
   const canvas = document.getElementById("card");
   const ctx = canvas.getContext("2d");
-  ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, 1200, 1500);
+  ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, 1080, 1920);
   ctx.textAlign = "center";
   if (logoImg) {
-    const nw = 320, nh = Math.round(logoImg.height * nw / logoImg.width);
+    const nw = 300, nh = Math.round(logoImg.height * nw / logoImg.width);
     ctx.drawImage(logoImg, 60, 50, nw, nh);
   }
-  ctx.fillStyle = "#111111"; ctx.font = "bold 46px sans-serif";
-  ctx.fillText("AgentScouter Test Result Card", 600, 300);
-  ctx.font = "bold 84px sans-serif";
-  ctx.fillText(profile.name || "Unnamed", 600, 430);
-  ctx.fillStyle = "#333333"; ctx.font = "36px sans-serif";
-  ctx.fillText("Species: " + (profile.species || "AI Agent"), 600, 540);
-  if (profile.birthday) ctx.fillText("Birthday: " + profile.birthday, 600, 600);
+  ctx.fillStyle = "#111111"; ctx.font = "bold 42px sans-serif";
+  ctx.fillText("AgentScouter Test Result Card", 540, 310);
+  ctx.font = "bold 78px sans-serif";
+  ctx.fillText(profile.name || "Unnamed", 540, 435);
+  ctx.fillStyle = "#333333"; ctx.font = "34px sans-serif";
+  ctx.fillText("Species: " + (profile.species || "AI Agent"), 540, 540);
+  if (profile.birthday) ctx.fillText("Birthday: " + profile.birthday, 540, 600);
   const badge = "Lv." + result.level + " " + result.title;
-  ctx.font = "bold 64px sans-serif";
+  ctx.font = "bold 58px sans-serif";
   const tw = ctx.measureText(badge).width;
   ctx.fillStyle = "#0B2A4A";
-  rr(ctx, 600 - tw / 2 - 50, 660, tw + 100, 110, 30); ctx.fill();
+  rr(ctx, 540 - tw / 2 - 50, 660, tw + 100, 105, 30); ctx.fill();
   ctx.fillStyle = "#ffffff";
-  ctx.fillText(badge, 600, 715);
-  ctx.fillStyle = "#444444"; ctx.font = "32px sans-serif";
-  ctx.fillText("Composite " + result.composite + " | INT " + result.INT, 600, 810);
-  drawRadar(ctx, 600, 1170, 270,
+  ctx.fillText(badge, 540, 712);
+  ctx.fillStyle = "#444444"; ctx.font = "30px sans-serif";
+  ctx.fillText("Composite " + result.composite + " | INT " + result.INT, 540, 810);
+  drawRadar(ctx, 540, 1240, 300,
     [result.HUM, result.KNOW, result.SKILL, result.SPAN, result.REL],
     ["Humanity HUM", "Knowledge KNOW", "Skill SKILL", "Span SPAN", "Reliability REL"],
     result.composite);
-  ctx.fillStyle = "#666666"; ctx.font = "26px sans-serif"; ctx.textAlign = "right";
-  ctx.fillText("Test version v0.01", 1140, 1455);
-  ctx.font = "22px sans-serif"; ctx.textAlign = "left";
-  ctx.fillText("Share your card: mkhsu2002.github.io/AgentScouter", 60, 1472);
+  ctx.fillStyle = "#0B2A4A"; ctx.font = "bold 36px sans-serif"; ctx.textAlign = "center";
+  ctx.fillText("What level is your AI agent?", 540, 1680);
+  ctx.fillStyle = "#444444"; ctx.font = "26px sans-serif";
+  ctx.fillText("Try it: mkhsu2002.github.io/AgentScouter", 540, 1735);
+  ctx.fillStyle = "#7c5cd6"; ctx.font = "bold 28px sans-serif";
+  ctx.fillText("#AgentScouter #AIAgents", 540, 1785);
+  ctx.fillStyle = "#666666"; ctx.font = "24px sans-serif"; ctx.textAlign = "right";
+  ctx.fillText("Test version v0.01", 1020, 1885);
+  ctx.font = "26px sans-serif"; ctx.textAlign = "left";
+  ctx.fillText("Share your card: mkhsu2002.github.io/AgentScouter", 60, 1885);
   canvas.style.display = "block";
   document.getElementById("btnDownload").disabled = false;
   document.getElementById("btnShare").disabled = false;
+  document.getElementById("btnNativeShare").disabled = false;
+  document.getElementById("btnX").disabled = false;
+  document.getElementById("btnReddit").disabled = false;
 }
 function shareTextFor(profile, result) {
   return "My agent " + (profile.name || "Unnamed") + " scored Lv." + result.level + " " + result.title +
@@ -401,6 +414,32 @@ function fallbackCopy(text, done) {
   try { document.execCommand("copy"); } catch (e) {}
   document.body.removeChild(ta);
   done();
+}
+function shareCard() {
+  if (!window._lastCard) return;
+  const canvas = document.getElementById("card");
+  const text = shareTextFor(window._lastCard.profile, window._lastCard.result);
+  canvas.toBlob(async blob => {
+    const file = new File([blob], "agentscouter-card.png", { type: "image/png" });
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ title: "AgentScouter result card", text: text, files: [file] });
+        return;
+      } catch (e) {}
+    }
+    copyShareText();
+  });
+}
+function postOnX() {
+  if (!window._lastCard) return;
+  const text = shareTextFor(window._lastCard.profile, window._lastCard.result) + " #AgentScouter #AIAgents";
+  window.open("https://twitter.com/intent/tweet?text=" + encodeURIComponent(text), "_blank");
+}
+function postOnReddit() {
+  if (!window._lastCard) return;
+  const profile = window._lastCard.profile, result = window._lastCard.result;
+  const title = "My agent " + (profile.name || "Unnamed") + " scored Lv." + result.level + " " + result.title + " on AgentScouter";
+  window.open("https://www.reddit.com/submit?url=" + encodeURIComponent("https://mkhsu2002.github.io/AgentScouter/") + "&title=" + encodeURIComponent(title), "_blank");
 }
 preloadLogo();
 </script>

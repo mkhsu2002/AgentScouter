@@ -152,9 +152,12 @@ HUM 4, everything else 0, composite 0, XP 0, Lv.1.
 
 After scoring, render a PNG result card with the logo at the top left,
 name, species, optional birthday, level, and the five-dimension radar
-chart. The bottom right notes the card version (Test version v0.01),
-and the bottom left points readers to the Pages site so a shared card
-is self-explanatory.
+chart. The card is 1080 x 1920 (9:16, for vertical social posts and
+stories) and carries a social share prompt, the Pages site, and the
+hashtags #AgentScouter #AIAgents, so a shared card is
+self-explanatory. The bottom right notes the card version
+(Test version v0.01), and the bottom left points readers to the Pages
+site.
 
 ```bash
 python3 -m agent_level.cli examples/fang_profile.json --card card.png --logo docs/assets/logo.png

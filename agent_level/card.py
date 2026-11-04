@@ -1,13 +1,15 @@
 """Result card generator for the Agent Level Calculator.
 
 Renders a PNG result card: the logo at the top left, name, species,
-optional birthday, level badge, five-dimension radar chart, the
-"Test version v0.01" note at the bottom right, and a share line at
-the bottom left pointing to the Pages site.
+optional birthday, level badge, five-dimension radar chart, a social
+share prompt with hashtags, the "Test version v0.01" note at the
+bottom right, and a share line at the bottom left pointing to the
+Pages site.
 
-Card size is 1200 x 1500. Fonts: tries common CJK font locations and
-falls back to PIL's default font (which cannot render CJK) when none
-is found; install a CJK font for correct Chinese labels.
+Card size is 1080 x 1920 (9:16, for vertical social posts and
+stories). Fonts: tries common CJK font locations and falls back to
+PIL's default font (which cannot render CJK) when none is found;
+install a CJK font for correct Chinese labels.
 """
 
 import math
@@ -16,6 +18,11 @@ import os
 from PIL import Image, ImageDraw, ImageFont
 
 CARD_VERSION_LABEL = "Test version v0.01"
+CARD_WIDTH = 1080
+CARD_HEIGHT = 1920
+CARD_SHARE_PROMPT = "What level is your AI agent?"
+CARD_SHARE_TAGS = "#AgentScouter #AIAgents"
+CARD_SHARE_URL = "mkhsu2002.github.io/AgentScouter"
 NAVY = (11, 42, 74)
 VIOLET_HEX = "#7c5cd6"
 DARK_VIOLET_HEX = "#4c1d95"
@@ -102,59 +109,65 @@ def draw_radar(img, cx, cy, radius, values, labels, avg,
 def generate_card(result, name="Unnamed", species="AI Agent", birthday=None,
                   logo_path=None, output_path="agentscouter-card.png"):
     """Render the result card PNG. Returns the output path."""
-    width, height = 1200, 1500
+    width, height = CARD_WIDTH, CARD_HEIGHT
+    cx = width // 2
     img = Image.new("RGB", (width, height), "white")
     draw = ImageDraw.Draw(img)
 
-    f_title = _load_font(46, bold=True)
-    f_name = _load_font(84, bold=True)
-    f_info = _load_font(36)
-    f_level = _load_font(64, bold=True)
-    f_sub = _load_font(32)
-    f_label = _load_font(32, bold=True)
-    f_val = _load_font(34, bold=True)
-    f_ring = _load_font(22)
-    f_ver = _load_font(26)
-    f_share = _load_font(22)
+    f_title = _load_font(42, bold=True)
+    f_name = _load_font(78, bold=True)
+    f_info = _load_font(34)
+    f_level = _load_font(58, bold=True)
+    f_sub = _load_font(30)
+    f_label = _load_font(30, bold=True)
+    f_val = _load_font(32, bold=True)
+    f_ring = _load_font(20)
+    f_ver = _load_font(24)
+    f_share = _load_font(26)
+    f_prompt = _load_font(36, bold=True)
+    f_tags = _load_font(28, bold=True)
 
     if logo_path and os.path.exists(logo_path):
         try:
             logo = Image.open(logo_path).convert("RGBA")
             w, h = logo.size
-            new_w = 320
+            new_w = 300
             logo = logo.resize((new_w, round(h * new_w / w)))
             img.paste(logo, (60, 50), logo)
         except Exception:
             pass
     draw = ImageDraw.Draw(img)
 
-    _text(draw, (600, 300), "AgentScouter Test Result Card", f_title, "#111111")
-    _text(draw, (600, 430), name, f_name, "#111111")
-    _text(draw, (600, 540), f"Species: {species}", f_info, "#333333")
+    _text(draw, (cx, 310), "AgentScouter Test Result Card", f_title, "#111111")
+    _text(draw, (cx, 435), name, f_name, "#111111")
+    _text(draw, (cx, 540), f"Species: {species}", f_info, "#333333")
     if birthday:
-        _text(draw, (600, 600), f"Birthday: {birthday}", f_info, "#333333")
+        _text(draw, (cx, 600), f"Birthday: {birthday}", f_info, "#333333")
 
     badge_text = f"Lv.{result['level']} {result['title']}"
     bbox = draw.textbbox((0, 0), badge_text, font=f_level)
     text_w = bbox[2] - bbox[0]
-    bx0, bx1 = 600 - text_w // 2 - 50, 600 + text_w // 2 + 50
-    by0, by1 = 660, 770
+    bx0, bx1 = cx - text_w // 2 - 50, cx + text_w // 2 + 50
+    by0, by1 = 660, 765
     draw.rounded_rectangle([bx0, by0, bx1, by1], radius=30, fill=NAVY)
-    _text(draw, (600, (by0 + by1) // 2), badge_text, f_level, "white")
-    _text(draw, (600, 810),
+    _text(draw, (cx, (by0 + by1) // 2), badge_text, f_level, "white")
+    _text(draw, (cx, 810),
           f"Composite {result['composite']} | INT {result['intelligence']}",
           f_sub, "#444444")
 
     dims = result["dimensions"]
     values = [dims[k]["score"] for k in ("HUM", "KNOW", "SKILL", "SPAN", "REL")]
     labels = ["Humanity HUM", "Knowledge KNOW", "Skill SKILL", "Span SPAN", "Reliability REL"]
-    img = draw_radar(img, 600, 1170, 270, values, labels,
+    img = draw_radar(img, cx, 1240, 300, values, labels,
                      result["composite"], f_label, f_val, f_ring)
     draw = ImageDraw.Draw(img)
-    _text(draw, (1140, 1455), CARD_VERSION_LABEL, f_ver, "#666666",
+    _text(draw, (cx, 1680), CARD_SHARE_PROMPT, f_prompt, "#0B2A4A")
+    _text(draw, (cx, 1735), f"Try it: {CARD_SHARE_URL}", f_share, "#444444")
+    _text(draw, (cx, 1785), CARD_SHARE_TAGS, f_tags, VIOLET_HEX)
+    _text(draw, (width - 60, 1885), CARD_VERSION_LABEL, f_ver, "#666666",
           anchor="rm")
-    _text(draw, (60, 1472),
-          "Share your card: mkhsu2002.github.io/AgentScouter",
+    _text(draw, (60, 1885),
+          f"Share your card: {CARD_SHARE_URL}",
           f_share, "#666666", anchor="lm")
     img.save(output_path)
     return output_path

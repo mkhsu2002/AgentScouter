@@ -13,7 +13,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from PIL import Image  # noqa: E402
 
-from agent_level.card import CARD_VERSION_LABEL, generate_card  # noqa: E402
+from agent_level.card import (CARD_HEIGHT, CARD_SHARE_TAGS,  # noqa: E402
+                              CARD_VERSION_LABEL, CARD_WIDTH, generate_card)
 from agent_level.core import calculate  # noqa: E402
 
 FANG_RESULT = {
@@ -38,7 +39,7 @@ class TestCard(unittest.TestCase):
             path = generate_card(FANG_RESULT, name="Fang", species="Muse",
                                  output_path=out)
             with Image.open(path) as img:
-                self.assertEqual(img.size, (1200, 1500))
+                self.assertEqual(img.size, (1080, 1920))
                 self.assertEqual(img.format, "PNG")
 
     def test_card_with_logo_and_birthday(self):
@@ -50,7 +51,7 @@ class TestCard(unittest.TestCase):
                           birthday="2026-09-23", logo_path=logo_path,
                           output_path=out)
             with Image.open(out) as img:
-                self.assertEqual(img.size, (1200, 1500))
+                self.assertEqual(img.size, (1080, 1920))
 
     def test_card_from_calculated_result(self):
         profile = {
@@ -70,6 +71,12 @@ class TestCard(unittest.TestCase):
 
     def test_card_version_label(self):
         self.assertEqual(CARD_VERSION_LABEL, "Test version v0.01")
+
+    def test_card_is_9_by_16_with_share_tags(self):
+        self.assertEqual((CARD_WIDTH, CARD_HEIGHT), (1080, 1920))
+        self.assertEqual(CARD_WIDTH * 16, CARD_HEIGHT * 9)
+        self.assertIn("#AgentScouter", CARD_SHARE_TAGS)
+        self.assertIn("#AIAgents", CARD_SHARE_TAGS)
 
 
 if __name__ == "__main__":
