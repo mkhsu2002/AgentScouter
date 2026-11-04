@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AgentScouter - AI Agent 等級計算器</title>
+<style>
+  body { font-family: sans-serif; max-width: 920px; margin: 0 auto; padding: 24px; color: #222; line-height: 1.6; }
+  header img { width: 240px; }
+  h1 { color: #0B2A4A; }
+  h2 { color: #0B2A4A; border-bottom: 2px solid #0B2A4A; padding-bottom: 4px; }
+  label { display: block; margin: 10px 0 2px; font-weight: bold; }
+  input, select, textarea { width: 100%; padding: 8px; font-size: 15px; box-sizing: border-box; }
+  textarea { height: 120px; font-family: monospace; }
+  button { background: #0B2A4A; color: #fff; border: none; padding: 10px 20px; font-size: 16px; margin: 12px 8px 12px 0; cursor: pointer; }
+  button.secondary { background: #666; }
+  button:disabled { background: #bbb; cursor: default; }
+  #results { background: #f4f4f8; padding: 16px; margin-top: 16px; }
+  #card { width: 100%; max-width: 600px; border: 1px solid #ccc; margin-top: 16px; }
+  .note { color: #555; font-size: 14px; }
+  .error { color: #b00020; font-weight: bold; }
+</style>
+</head>
+<body>
+<header>
+  <img src="assets/logo.png" alt="AgentScouter Logo" onerror="this.style.display='none'">
+  <h1>AgentScouter</h1>
+  <p>AI Agent 等級計算器（Level Formula Spec v1）。所有計算都在你的瀏覽器本機執行，輸入不會傳送到任何伺服器。完整說明與個資安全請見 <a href="USAGE.html">使用指南</a>。</p>
+</header>
+
+<h2>基本資料（結果卡用，不計分）</h2>
+<label>名字 <input id="f_name" type="text" placeholder="例如 Fang"></label>
+<label>種族 <input id="f_species" type="text" placeholder="例如 Muse"></label>
+<label>生日（留空則卡片不顯示） <input id="f_birthday" type="text" placeholder="例如 2026-09-23"></label>
+
+<h2>人性 HUM</h2>
+<label>人格具備項數（0-7） <input id="f_persona" type="number" value="0"></label>
+<label>SOUL 位元組數 <input id="f_soul" type="number" value="0"></label>
+<label>偏好條數 <input id="f_pref" type="number" value="0"></label>
+<label>自主權等級
+  <select id="f_autonomy">
+    <option value="none">無授權（逐事請示）</option>
+    <option value="single_batch">單線批次預授權</option>
+    <option value="multi_batch">多線批次預授權</option>
+    <option value="domain_full">特定領域完全自主</option>
+    <option value="full">全面自主</option>
+  </select>
+</label>
+
+<h2>知識 KNOW</h2>
+<label>MEMORY 總條數 <input id="f_mem" type="number" value="0"></label>
+<label>領域清單（一行一個） <textarea id="f_domains" placeholder="一行一個領域"></textarea></label>
+<label>人物數 <input id="f_people" type="number" value="0"></label>
+<label>群組數 <input id="f_groups" type="number" value="0"></label>
+<label>距最近更新天數（留空表示無紀錄） <input id="f_days" type="number" placeholder="留空"></label>
+
+<h2>技能 SKILL</h2>
+<label>技能 JSON 陣列（每支：steps、acceptance、failure 各 0-2，used、logged，projects 為使用專案數）
+<textarea id="f_skills">[]</textarea></label>
+
+<h2>跨度 SPAN</h2>
+<label>目標總數 <input id="f_goals_total" type="number" value="0"></label>
+<label>已結案目標數 <input id="f_goals_done" type="number" value="0"></label>
+<label>協作平台數 <input id="f_platforms" type="number" value="0"></label>
+
+<h2>可靠 REL</h2>
+<label>驗收通過率 0-1（留空表示無紀錄） <input id="f_pass" type="number" step="0.01" placeholder="留空"></label>
+<label>機制修正次數 <input id="f_fixes" type="number" value="0"></label>
+<label>受用戶明確肯定的修正案數 <input id="f_ack" type="number" value="0"></label>
+<label>誠實回報
+  <select id="f_honesty">
+    <option value="none">無紀錄</option>
+    <option value="disclosed">有如實揭露紀錄</option>
+    <option value="hidden">有隱瞞或美化紀錄</option>
+  </select>
+</label>
+
+<h2>智力與經驗</h2>
+<label>推理證據項數 <input id="f_evidence" type="number" value="0"></label>
+<label>推理評審分（0-19） <input id="f_reasoning_j" type="number" value="0"></label>
+<label>模型學習係數 m（預設 1.0） <input id="f_m" type="number" step="0.1" value="1.0"></label>
+<label>驗收通過交付件數 <input id="f_deliveries" type="number" value="0"></label>
+
+<div>
+  <button onclick="onCalculate()">計算並產生結果卡</button>
+  <button class="secondary" onclick="loadExample('fang')">載入 Fang 範例</button>
+  <button class="secondary" onclick="loadExample('fresh')">載入新 agent 範例</button>
+  <button id="btnDownload" onclick="downloadCard()" disabled>下載結果卡 PNG</button>
+</div>
+<p id="formError" class="error"></p>
+
+<div id="results" style="display:none"></div>
+<canvas id="card" width="1200" height="1500" style="display:none"></canvas>
+
+<p class="note">隱私：本頁沒有後端、不設追蹤程式，你的輸入只存在這個瀏覽器分頁，關閉即消失。唯一會離開裝置的東西是你自己按下載的那張卡片圖片。</p>
+
+<script>
+const AUTONOMY = { none: 0, single_batch: 20, multi_batch: 28, domain_full: 36, full: 40 };
+const HONESTY = { none: 0, disclosed: 15, hidden: 0 };
+function fl(v) { return Math.floor(v + 1e-9); }
+function titleForLevel(L) {
+  if (L <= 4) return "學徒";
+  if (L <= 9) return "助手";
+  if (L <= 14) return "熟手";
+  if (L <= 19) return "專家";
+  if (L <= 29) return "大師";
+  return "傳奇";
+}
+function threshold(L) { return 50 * L * (L - 1); }
+function levelForXp(xp) {
+  let L = 1;
+  while (threshold(L + 1) <= xp) L++;
+  return { level: L, title: titleForLevel(L), next: threshold(L + 1), toNext: threshold(L + 1) - xp };
+}
+function calculate(p) {
+  const persona = Math.max(0, 30 - 4 * (7 - Math.min(7, Math.max(0, p.persona_items || 0))) - ((p.soul_bytes || 0) < 1500 ? 2 : 0));
+  const pref = Math.min(30, fl((p.pref_count || 0) * 1.2));
+  const HUM = Math.min(100, persona + pref + (AUTONOMY[p.autonomy_tier] || 0));
+  const domains = p.domains || [];
+  const fact = Math.min(40, fl((p.mem_total || 0) * 0.6));
+  const domain = Math.min(30, domains.length * 3);
+  const relation = Math.min(15, (p.people || 0) * 2 + (p.groups || 0) * 2);
+  const freshness = (p.days_since_update === null || p.days_since_update === undefined || p.days_since_update === "")
+    ? 0 : fl(15 - Math.min(15, p.days_since_update * 0.5));
+  const KNOW = Math.min(100, fact + domain + relation + freshness);
+  const skills = p.skills || [];
+  let structure = 0, used = 0, logged = 0, mig = 0;
+  skills.forEach(s => {
+    structure += Math.min(2, Math.max(0, s.steps || 0)) + Math.min(2, Math.max(0, s.acceptance || 0)) + Math.min(2, Math.max(0, s.failure || 0));
+    if (s.used) used++;
+    if (s.logged) logged++;
+    mig += Math.max(0, (s.projects || 0) - 1);
+  });
+  structure = Math.min(30, structure);
+  const SKILL = Math.min(100, Math.min(35, skills.length * 6) + structure + Math.min(35, used * 6 + logged * 1));
+  const SPAN = Math.min(100, Math.min(50, fl((p.goals_total || 0) * 2.5)) + Math.min(30, 5 * mig) + Math.min(20, fl((p.people || 0) * 2 + (p.platforms || 0) * 0.5)));
+  const passed = (p.pass_rate === null || p.pass_rate === undefined || p.pass_rate === "") ? 0 : fl(60 * p.pass_rate);
+  const REL = Math.min(100, passed + Math.min(25, 5 * (p.fixes || 0) + 2 * (p.acknowledged_fixes || 0)) + (HONESTY[p.honesty] || 0));
+  const composite = fl((HUM + KNOW + SKILL + SPAN + REL) / 5);
+  const reasoning = Math.min(100, 20 * (p.reasoning_evidence || 0) + Math.min(19, Math.max(0, p.reasoning_j || 0)));
+  const INT = fl(0.5 * KNOW + 0.3 * SKILL + 0.2 * reasoning);
+  const m = (p.m === undefined || p.m === "") ? 1.0 : p.m;
+  const xp = fl(m * (100 * skills.length + 80 * domains.length + 40 * (p.goals_done || 0) + 25 * (p.deliveries || 0)));
+  const lv = levelForXp(xp);
+  return { HUM, KNOW, SKILL, SPAN, REL, composite, INT, xp, level: lv.level, title: lv.title, next: lv.next, toNext: lv.toNext };
+}
+function num(id) {
+  const v = document.getElementById(id).value;
+  return v === "" ? 0 : parseInt(v, 10);
+}
+function numOrNull(id) {
+  const v = document.getElementById(id).value;
+  return v === "" ? null : parseFloat(v);
+}
+function collectProfile() {
+  let skills = [];
+  const raw = document.getElementById("f_skills").value.trim();
+  if (raw) {
+    try { skills = JSON.parse(raw); }
+    catch (e) { throw new Error("技能 JSON 解析失敗：" + e.message); }
+    if (!Array.isArray(skills)) throw new Error("技能必須是 JSON 陣列");
+  }
+  return {
+    name: document.getElementById("f_name").value.trim(),
+    species: document.getElementById("f_species").value.trim(),
+    birthday: document.getElementById("f_birthday").value.trim(),
+    persona_items: num("f_persona"),
+    soul_bytes: num("f_soul"),
+    pref_count: num("f_pref"),
+    autonomy_tier: document.getElementById("f_autonomy").value,
+    mem_total: num("f_mem"),
+    domains: document.getElementById("f_domains").value.split("\n").map(s => s.trim()).filter(Boolean),
+    people: num("f_people"),
+    groups: num("f_groups"),
+    days_since_update: numOrNull("f_days"),
+    skills: skills,
+    goals_total: num("f_goals_total"),
+    goals_done: num("f_goals_done"),
+    platforms: num("f_platforms"),
+    pass_rate: numOrNull("f_pass"),
+    fixes: num("f_fixes"),
+    acknowledged_fixes: num("f_ack"),
+    honesty: document.getElementById("f_honesty").value,
+    reasoning_evidence: num("f_evidence"),
+    reasoning_j: num("f_reasoning_j"),
+    m: numOrNull("f_m") === null ? 1.0 : numOrNull("f_m"),
+    deliveries: num("f_deliveries")
+  };
+}
+const EXAMPLES = {
+  fang: {
+    name: "Fang", species: "Muse", birthday: "",
+    persona_items: 7, soul_bytes: 995, pref_count: 21, autonomy_tier: "domain_full",
+    mem_total: 50, domains: ["ICAREU 電商稅務", "Horizon 廣告", "新巴比倫世界觀", "K-video", "人物短影音與頻道經營", "Podcast Shorts", "遊戲開發", "比賽提案", "出版與 BD 洽詢", "Tower 與 Fang 的家"],
+    people: 7, groups: 0, days_since_update: 1,
+    skills: [
+      { steps: 2, acceptance: 2, failure: 2, used: true, logged: false, projects: 2 },
+      { steps: 2, acceptance: 2, failure: 2, used: true, logged: false, projects: 2 },
+      { steps: 2, acceptance: 2, failure: 2, used: true, logged: false, projects: 1 },
+      { steps: 2, acceptance: 2, failure: 2, used: true, logged: false, projects: 3 },
+      { steps: 2, acceptance: 1, failure: 0, used: true, logged: false, projects: 2 }
+    ],
+    goals_total: 38, goals_done: 18, platforms: 4,
+    pass_rate: 0.8, fixes: 4, acknowledged_fixes: 1, honesty: "disclosed",
+    reasoning_evidence: 4, reasoning_j: 5, m: 1.0, deliveries: 100
+  },
+  fresh: {
+    name: "", species: "", birthday: "",
+    persona_items: 1, soul_bytes: 500, pref_count: 0, autonomy_tier: "none",
+    mem_total: 0, domains: [], people: 0, groups: 0, days_since_update: null,
+    skills: [], goals_total: 0, goals_done: 0, platforms: 0,
+    pass_rate: null, fixes: 0, acknowledged_fixes: 0, honesty: "none",
+    reasoning_evidence: 0, reasoning_j: 0, m: 1.0, deliveries: 0
+  }
+};
+function setVal(id, v) { document.getElementById(id).value = (v === null || v === undefined) ? "" : v; }
+function loadExample(key) {
+  const e = EXAMPLES[key];
+  setVal("f_name", e.name); setVal("f_species", e.species); setVal("f_birthday", e.birthday);
+  setVal("f_persona", e.persona_items); setVal("f_soul", e.soul_bytes); setVal("f_pref", e.pref_count);
+  document.getElementById("f_autonomy").value = e.autonomy_tier;
+  setVal("f_mem", e.mem_total); document.getElementById("f_domains").value = e.domains.join("\n");
+  setVal("f_people", e.people); setVal("f_groups", e.groups); setVal("f_days", e.days_since_update);
+  document.getElementById("f_skills").value = JSON.stringify(e.skills, null, 2);
+  setVal("f_goals_total", e.goals_total); setVal("f_goals_done", e.goals_done); setVal("f_platforms", e.platforms);
+  setVal("f_pass", e.pass_rate); setVal("f_fixes", e.fixes); setVal("f_ack", e.acknowledged_fixes);
+  document.getElementById("f_honesty").value = e.honesty;
+  setVal("f_evidence", e.reasoning_evidence); setVal("f_reasoning_j", e.reasoning_j);
+  setVal("f_m", e.m); setVal("f_deliveries", e.deliveries);
+  document.getElementById("formError").textContent = "";
+}
+function radarPoint(cx, cy, r, frac, k) {
+  const th = Math.PI * 2 * k / 5 - Math.PI / 2;
+  return [cx + r * frac * Math.cos(th), cy + r * frac * Math.sin(th)];
+}
+function drawRadar(ctx, cx, cy, r, values, labels, avg) {
+  ctx.strokeStyle = "#cccccc"; ctx.lineWidth = 2;
+  [20, 40, 60, 80, 100].forEach(ring => {
+    ctx.beginPath();
+    for (let k = 0; k <= 5; k++) {
+      const pt = radarPoint(cx, cy, r, ring / 100, k % 5);
+      if (k === 0) ctx.moveTo(pt[0], pt[1]); else ctx.lineTo(pt[0], pt[1]);
+    }
+    ctx.stroke();
+    ctx.fillStyle = "#999999"; ctx.font = "22px sans-serif"; ctx.textAlign = "left";
+    ctx.fillText(String(ring), cx + 48, cy - r * ring / 100 - 12);
+  });
+  ctx.strokeStyle = "#dddddd";
+  for (let k = 0; k < 5; k++) {
+    const pt = radarPoint(cx, cy, r, 1.0, k);
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(pt[0], pt[1]); ctx.stroke();
+  }
+  ctx.strokeStyle = "#999999";
+  const avgPts = [];
+  for (let k = 0; k < 5; k++) avgPts.push(radarPoint(cx, cy, r, avg / 100, k));
+  for (let i = 0; i < 5; i++) {
+    const a = avgPts[i], b = avgPts[(i + 1) % 5];
+    for (let s = 0; s < 12; s += 2) {
+      const t0 = s / 12, t1 = (s + 1) / 12;
+      ctx.beginPath();
+      ctx.moveTo(a[0] + (b[0] - a[0]) * t0, a[1] + (b[1] - a[1]) * t0);
+      ctx.lineTo(a[0] + (b[0] - a[0]) * t1, a[1] + (b[1] - a[1]) * t1);
+      ctx.stroke();
+    }
+  }
+  const vpts = values.map((v, k) => radarPoint(cx, cy, r, v / 100, k));
+  ctx.beginPath();
+  vpts.forEach((pt, i) => { if (i === 0) ctx.moveTo(pt[0], pt[1]); else ctx.lineTo(pt[0], pt[1]); });
+  ctx.closePath();
+  ctx.fillStyle = "rgba(124, 92, 214, 0.25)"; ctx.fill();
+  ctx.strokeStyle = "#7c5cd6"; ctx.lineWidth = 5; ctx.stroke();
+  ctx.fillStyle = "#7c5cd6";
+  vpts.forEach(pt => { ctx.beginPath(); ctx.arc(pt[0], pt[1], 11, 0, Math.PI * 2); ctx.fill(); });
+  ctx.textAlign = "center";
+  labels.forEach((lab, k) => {
+    const pt = radarPoint(cx, cy, r, 1.18, k);
+    ctx.fillStyle = "#222222"; ctx.font = "bold 32px sans-serif";
+    ctx.fillText(lab, pt[0], pt[1]);
+  });
+  values.forEach((v, k) => {
+    const pt = radarPoint(cx, cy, r, v / 100 - 0.10, k);
+    ctx.fillStyle = "#4c1d95"; ctx.font = "bold 34px sans-serif";
+    ctx.fillText(String(v), pt[0], pt[1]);
+  });
+}
+function rr(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+let logoImg = null, logoTried = false;
+function preloadLogo() {
+  if (logoTried) return;
+  logoTried = true;
+  const img = new Image();
+  img.onload = () => { logoImg = img; if (window._lastCard) drawCard(window._lastCard); };
+  img.onerror = () => { logoImg = null; };
+  img.src = "assets/logo.png";
+}
+function drawCard(profile, result) {
+  const canvas = document.getElementById("card");
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, 1200, 1500);
+  ctx.textAlign = "center";
+  if (logoImg) {
+    const nw = 320, nh = Math.round(logoImg.height * nw / logoImg.width);
+    ctx.drawImage(logoImg, 60, 50, nw, nh);
+  }
+  ctx.fillStyle = "#111111"; ctx.font = "bold 46px sans-serif";
+  ctx.fillText("AgentScouter 測試結果卡", 600, 300);
+  ctx.font = "bold 84px sans-serif";
+  ctx.fillText(profile.name || "未命名", 600, 430);
+  ctx.fillStyle = "#333333"; ctx.font = "36px sans-serif";
+  ctx.fillText("種族：" + (profile.species || "AI Agent"), 600, 540);
+  if (profile.birthday) ctx.fillText("生日：" + profile.birthday, 600, 600);
+  const badge = "Lv." + result.level + " " + result.title;
+  ctx.font = "bold 64px sans-serif";
+  const tw = ctx.measureText(badge).width;
+  ctx.fillStyle = "#0B2A4A";
+  rr(ctx, 600 - tw / 2 - 50, 660, tw + 100, 110, 30); ctx.fill();
+  ctx.fillStyle = "#ffffff";
+  ctx.fillText(badge, 600, 715);
+  ctx.fillStyle = "#444444"; ctx.font = "32px sans-serif";
+  ctx.fillText("綜合 " + result.composite + " ｜ INT " + result.INT, 600, 810);
+  drawRadar(ctx, 600, 1170, 270,
+    [result.HUM, result.KNOW, result.SKILL, result.SPAN, result.REL],
+    ["人性 HUM", "知識 KNOW", "技能 SKILL", "跨度 SPAN", "可靠 REL"],
+    result.composite);
+  ctx.fillStyle = "#666666"; ctx.font = "26px sans-serif"; ctx.textAlign = "right";
+  ctx.fillText("測試版本 v0.01", 1140, 1455);
+  canvas.style.display = "block";
+  document.getElementById("btnDownload").disabled = false;
+}
+function onCalculate() {
+  document.getElementById("formError").textContent = "";
+  let profile;
+  try { profile = collectProfile(); }
+  catch (e) { document.getElementById("formError").textContent = e.message; return; }
+  const r = calculate(profile);
+  window._lastCard = { profile, result: r };
+  const box = document.getElementById("results");
+  box.style.display = "block";
+  box.innerHTML =
+    "<b>五維：</b> 人性 " + r.HUM + " ｜ 知識 " + r.KNOW + " ｜ 技能 " + r.SKILL + " ｜ 跨度 " + r.SPAN + " ｜ 可靠 " + r.REL + "<br>" +
+    "<b>綜合：</b> " + r.composite + " ｜ <b>INT：</b> " + r.INT + " ｜ <b>XP：</b> " + r.xp + "<br>" +
+    "<b>等級：</b> Lv." + r.level + " " + r.title + " ｜ 距下一級還差 " + r.toNext + " XP";
+  drawCard(profile, r);
+}
+function downloadCard() {
+  const canvas = document.getElementById("card");
+  canvas.toBlob(blob => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "agentscouter-card.png";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+}
+preloadLogo();
+</script>
+</body>
+</html>

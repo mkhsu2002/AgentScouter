@@ -1,5 +1,7 @@
 # Agent Level Calculator
 
+![AgentScouter Logo](docs/assets/logo.png)
+
 An evidence-based level calculator for AI agents, implemented from the
 Level Formula Spec v1. It scores an agent on five dimensions, derives an
 intelligence value, and converts accumulated experience into an RPG-style
@@ -93,6 +95,9 @@ timestamps default to "no record". Counts must be non-negative.
 | `m` | number | Model learning coefficient, default 1.0 |
 | `deliveries` | int | Accepted deliveries |
 | `estimated` | string list | Fields that are estimates, echoed back as a flag |
+| `name` | string | Agent display name for the result card (not scored) |
+| `species` | string | Agent family for the result card, e.g. Muse (not scored) |
+| `birthday` | string | Birthday for the result card; omitted from the card when absent (not scored) |
 
 ## Formulas (v1)
 
@@ -137,6 +142,30 @@ XP 4520 at 100 deliveries, Lv.10. At 80 deliveries XP is 4020 (Lv.9)
 and at 120 deliveries XP is 5020 (Lv.10), which is the Lv.9-10 range
 in the original trial. `examples/new_agent_profile.json` scores
 HUM 4, everything else 0, composite 0, XP 0, Lv.1.
+
+## Result card
+
+After scoring, render a PNG result card with the logo at the top left,
+name, species, optional birthday, level, and the five-dimension radar
+chart. The bottom right notes the card version (測試版本 v0.01).
+
+```bash
+python3 -m agent_level.cli examples/fang_profile.json --card card.png --logo docs/assets/logo.png
+```
+
+Without `--logo` the card still renders, just without the logo image.
+The same card is available in the web version below, with a download
+button.
+
+## Live demo (GitHub Pages)
+
+Try it in the browser, no install needed:
+
+https://mkhsu2002.github.io/AgentScouter/
+
+The page runs the same v1 formulas in JavaScript, entirely in your
+browser, and can download the result card as a PNG. For the full
+privacy story, see the [usage guide](docs/USAGE.md).
 
 ## Tests
 
