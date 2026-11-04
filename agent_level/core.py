@@ -24,12 +24,12 @@ HONESTY_SCORES = {
 }
 
 TITLES = [
-    (1, 4, "學徒"),
-    (5, 9, "助手"),
-    (10, 14, "熟手"),
-    (15, 19, "專家"),
-    (20, 29, "大師"),
-    (30, None, "傳奇"),
+    (1, 4, "Apprentice"),
+    (5, 9, "Assistant"),
+    (10, 14, "Practitioner"),
+    (15, 19, "Expert"),
+    (20, 29, "Master"),
+    (30, None, "Legend"),
 ]
 
 

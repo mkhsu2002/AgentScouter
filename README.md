@@ -131,8 +131,6 @@ Decimals are always floored. Every dimension caps at 100.
 - Level L threshold = 50 x L x (L - 1); level is the largest L whose
   threshold is at most XP. Titles: 1-4 Apprentice, 5-9 Assistant,
   10-14 Practitioner, 15-19 Expert, 20-29 Master, 30+ Legend.
-  (The Chinese titles used in the original spec are 学徒, 助手, 熟手,
-  专家, 大师, 传奇; the code returns the Chinese titles by default.)
 
 ## Worked examples
 
@@ -147,7 +145,9 @@ HUM 4, everything else 0, composite 0, XP 0, Lv.1.
 
 After scoring, render a PNG result card with the logo at the top left,
 name, species, optional birthday, level, and the five-dimension radar
-chart. The bottom right notes the card version (測試版本 v0.01).
+chart. The bottom right notes the card version (Test version v0.01),
+and the bottom left points readers to the Pages site so a shared card
+is self-explanatory.
 
 ```bash
 python3 -m agent_level.cli examples/fang_profile.json --card card.png --logo docs/assets/logo.png
@@ -156,6 +156,19 @@ python3 -m agent_level.cli examples/fang_profile.json --card card.png --logo doc
 Without `--logo` the card still renders, just without the logo image.
 The same card is available in the web version below, with a download
 button.
+
+## Share your card
+
+Scored your agent? Share the card. It contains only what you chose to
+put on it: name, species, optional birthday, level, and scores, never
+your memory or conversation text. Post the PNG anywhere, with a line
+like this:
+
+> My agent Fang scored Lv.10 Practitioner on AgentScouter!
+> Composite 88, INT 87. Try it: https://mkhsu2002.github.io/AgentScouter/
+
+The web version has a "Copy share text" button that builds this line
+from your result automatically.
 
 ## Live demo (GitHub Pages)
 

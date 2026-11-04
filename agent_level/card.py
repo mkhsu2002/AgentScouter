@@ -1,8 +1,9 @@
 """Result card generator for the Agent Level Calculator.
 
 Renders a PNG result card: the logo at the top left, name, species,
-optional birthday, level badge, five-dimension radar chart, and the
-"測試版本 v0.01" note at the bottom right.
+optional birthday, level badge, five-dimension radar chart, the
+"Test version v0.01" note at the bottom right, and a share line at
+the bottom left pointing to the Pages site.
 
 Card size is 1200 x 1500. Fonts: tries common CJK font locations and
 falls back to PIL's default font (which cannot render CJK) when none
@@ -14,7 +15,7 @@ import os
 
 from PIL import Image, ImageDraw, ImageFont
 
-CARD_VERSION_LABEL = "測試版本 v0.01"
+CARD_VERSION_LABEL = "Test version v0.01"
 NAVY = (11, 42, 74)
 VIOLET_HEX = "#7c5cd6"
 DARK_VIOLET_HEX = "#4c1d95"
@@ -98,7 +99,7 @@ def draw_radar(img, cx, cy, radius, values, labels, avg,
     return img
 
 
-def generate_card(result, name="未命名", species="AI Agent", birthday=None,
+def generate_card(result, name="Unnamed", species="AI Agent", birthday=None,
                   logo_path=None, output_path="agentscouter-card.png"):
     """Render the result card PNG. Returns the output path."""
     width, height = 1200, 1500
@@ -114,6 +115,7 @@ def generate_card(result, name="未命名", species="AI Agent", birthday=None,
     f_val = _load_font(34, bold=True)
     f_ring = _load_font(22)
     f_ver = _load_font(26)
+    f_share = _load_font(22)
 
     if logo_path and os.path.exists(logo_path):
         try:
@@ -126,11 +128,11 @@ def generate_card(result, name="未命名", species="AI Agent", birthday=None,
             pass
     draw = ImageDraw.Draw(img)
 
-    _text(draw, (600, 300), "AgentScouter 測試結果卡", f_title, "#111111")
+    _text(draw, (600, 300), "AgentScouter Test Result Card", f_title, "#111111")
     _text(draw, (600, 430), name, f_name, "#111111")
-    _text(draw, (600, 540), f"種族：{species}", f_info, "#333333")
+    _text(draw, (600, 540), f"Species: {species}", f_info, "#333333")
     if birthday:
-        _text(draw, (600, 600), f"生日：{birthday}", f_info, "#333333")
+        _text(draw, (600, 600), f"Birthday: {birthday}", f_info, "#333333")
 
     badge_text = f"Lv.{result['level']} {result['title']}"
     bbox = draw.textbbox((0, 0), badge_text, font=f_level)
@@ -140,16 +142,19 @@ def generate_card(result, name="未命名", species="AI Agent", birthday=None,
     draw.rounded_rectangle([bx0, by0, bx1, by1], radius=30, fill=NAVY)
     _text(draw, (600, (by0 + by1) // 2), badge_text, f_level, "white")
     _text(draw, (600, 810),
-          f"綜合 {result['composite']} ｜ INT {result['intelligence']}",
+          f"Composite {result['composite']} | INT {result['intelligence']}",
           f_sub, "#444444")
 
     dims = result["dimensions"]
     values = [dims[k]["score"] for k in ("HUM", "KNOW", "SKILL", "SPAN", "REL")]
-    labels = ["人性 HUM", "知識 KNOW", "技能 SKILL", "跨度 SPAN", "可靠 REL"]
+    labels = ["Humanity HUM", "Knowledge KNOW", "Skill SKILL", "Span SPAN", "Reliability REL"]
     img = draw_radar(img, 600, 1170, 270, values, labels,
                      result["composite"], f_label, f_val, f_ring)
     draw = ImageDraw.Draw(img)
     _text(draw, (1140, 1455), CARD_VERSION_LABEL, f_ver, "#666666",
           anchor="rm")
+    _text(draw, (60, 1472),
+          "Share your card: mkhsu2002.github.io/AgentScouter",
+          f_share, "#666666", anchor="lm")
     img.save(output_path)
     return output_path

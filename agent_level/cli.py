@@ -36,7 +36,7 @@ def main(argv=None):
     print(json.dumps(result, ensure_ascii=False, indent=2))
     if args.card:
         from .card import generate_card
-        name = args.name or profile.get("name") or "未命名"
+        name = args.name or profile.get("name") or "Unnamed"
         species = args.species or profile.get("species") or "AI Agent"
         birthday = args.birthday or profile.get("birthday")
         generate_card(

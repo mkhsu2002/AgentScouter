@@ -1,91 +1,127 @@
 ---
 layout: null
-title: AgentScouter 使用指南
+title: AgentScouter Usage Guide
 ---
 
-# AgentScouter 使用指南
+# AgentScouter Usage Guide
 
-AgentScouter 是 AI agent 的等級計算器：輸入一個 agent 的檔案統計數字，
-輸出五維分數、智力值、經驗值、等級與稱號，並可產生一張測試結果卡。
-公式版本為 Level Formula Spec v1，完整公式見 README。
+AgentScouter is a level calculator for AI agents: feed it a profile of
+file statistics and it returns five dimension scores, an intelligence
+value, experience, a level with a title, and optionally a test result
+card. The formula version is Level Formula Spec v1; the full formulas
+are in the README.
 
-[回到計算器](index.html)
+[Back to the calculator](index.html)
 
-## 快速開始
+## Quick start
 
-三種用法，算出來的數字完全一樣：
+Three ways to run it, all producing identical numbers:
 
-- **網頁版**：開啟 GitHub Pages 站台，填表、按計算、下载結果卡。
-- **命令列**：`python3 -m agent_level.cli profile.json`，加 `--card card.png`
-  可同時產生結果卡，加 `--logo logo.png` 可在卡片左上角壓上 Logo。
-- **MCP**：把 `python3 -m agent_level.mcp_server` 接進 MCP 客戶端，
-  用 `calculate_level` 與 `xp_to_level` 兩個工具呼叫。
+- **Web**: open the GitHub Pages site, fill in the form, calculate, and
+  download the result card.
+- **CLI**: `python3 -m agent_level.cli profile.json`, plus
+  `--card card.png` to render a card and `--logo logo.png` to put the
+  logo at the card's top left.
+- **MCP**: connect `python3 -m agent_level.mcp_server` to an MCP client
+  and call the `calculate_level` and `xp_to_level` tools.
 
-## 輸入說明
+## Input
 
-計算器只需要統計數字，不需要原文：
+The calculator needs statistics only, never raw text:
 
-- 計數：MEMORY 條數、技能數、目標數、人物數、領域數、交付件數。
-- 分級：人格具備項數、自主權等級、技能結構分、誠實回報分級。
-- 清單：領域只需要列出名稱，技能只需要結構分與使用專案數。
+- Counts: MEMORY items, skills, goals, people, domains, deliveries.
+- Grades: persona items present, autonomy tier, skill structure scores,
+  honest-reporting grade.
+- Lists: domain names only, and per skill only its structure scores
+  and the number of projects it was used in.
 
-範例檔 `examples/fang_profile.json` 與 `examples/new_agent_profile.json`
-可直接拿去跑，前者重現 Fang 的 v1 試算，後者是新 agent 的 Lv.1。
+The examples `examples/fang_profile.json` and
+`examples/new_agent_profile.json` run as-is: the first reproduces
+Fang's v1 trial, the second is a fresh agent at Lv.1. Domain names in
+the Fang example are translated to English for this repo; only the
+count matters for the score, so the numbers are unchanged.
 
-## 個資安全
+## Share your card
 
-這是本指南最重要的一節，請先讀完再填資料。
+Scored your agent? Share the card. It contains only what you chose to
+put on it: name, species, optional birthday, level, and scores. It
+never contains your memory or conversation text, and the card itself
+carries the Pages address at the bottom left so anyone who sees it
+knows where to try it.
 
-### 全本機運算，不連網
+Suggested share text (the web version builds this for you with its
+"Copy share text" button):
 
-- 命令列與 MCP 版都是本機行程，不連接網路、不上傳資料、不做遙測。
-- 網頁版的 JavaScript 全部在你的瀏覽器執行，輸入只存在這個分頁，
-  關閉分頁即消失；本站沒有後端、不設追蹤程式。
-- 計算器本身不留存任何輸入副本。刪掉你本機的 profile 檔，
-  就沒有任何殘留。
+> My agent Fang scored Lv.10 Practitioner on AgentScouter!
+> Composite 88, INT 87. Try it: https://mkhsu2002.github.io/AgentScouter/
 
-### 最小資料原則
+Before posting, check the card once: if you left a birthday on it,
+that birthday is public too. Leave it blank and it never appears.
 
-公式只需要計數與分級，永遠不需要以下資料，請勿填入：
+## Personal data safety
 
-- 密碼、API 金鑰、token、憑證內容
-- 真實姓名、地址、電話、電子郵件、身分證號、帳號
-- 對話原文、記憶原文、私人照片
+This is the most important section. Read it before entering data.
 
-如果你是從現有 agent 彙整數字，只抄條數、分級與清單名稱，
-不要貼上原文內容。
+### Local-only computation, no network
 
-### 結果卡的分享邊界
+- The CLI and MCP versions are local processes: no network, no
+  uploads, no telemetry.
+- The web version's JavaScript runs entirely in your browser. Input
+  lives only in that tab and disappears when you close it. The site
+  has no backend and no tracking.
+- The calculator keeps no copy of any input. Delete your local
+  profile file and nothing remains.
 
-結果卡只含你主動填的四種資訊：名字、種族、生日、等級與分數。
-生日為選填，不填就不顯示。分享卡片前請確認上面沒有你不想公開的資訊；
-卡片本身不含任何記憶原文，分享卡片不等於分享記憶。
+### Minimum data principle
 
-### MCP 與檔案存放
+The formulas need counts and grades only. Never enter:
 
-- MCP 走本機 stdio，不經過網路；但不要把含有真實個資的 profile
-  傳給不受信任的客戶端，也不要把 profile 檔放在公開目錄。
-- 公開 repo 的內容只有程式碼、公式與範例統計數字，
-  不含任何用戶私人資料。範例 Fang 數據僅為彙總計數。
+- Passwords, API keys, tokens, credential material
+- Real names, addresses, phone numbers, email addresses, ID numbers,
+  account names
+- Conversation text, memory text, private photos
 
-### GitHub Pages 的資料邊界
+When summarizing an existing agent, copy counts, grades, and list
+names only. Never paste raw text.
 
-Pages 站台是靜態頁面，沒有資料庫、沒有帳號系統。
-你填的數字不會被記錄；唯一會離開裝置的東西，
-是你自己按下的那張結果卡圖片。
+### Card sharing boundary
 
-## 常見問題
+The card shows only four kinds of information you actively entered:
+name, species, birthday, level and scores. Birthday is optional and
+omitted when blank. Check the card before sharing to make sure it
+holds nothing you want to keep private. Sharing a card is not sharing
+your memory.
 
-- **為什麼新 agent 一定是 Lv.1？**
-  等級跟著存檔走，不跟著帳號或底層模型走。
-  沒有累積檔案就是 Lv.1，這是設計定案，不是缺資料。
-- **底層模型會影響分數嗎？**
-  只影響學習係數 m，也就是經驗值累積速度；
-  m 不改變門檻、屬性公式與 INT，也不給起點經驗值。
-- **分數可以驗證嗎？**
-  可以。同一份 profile 加同一版公式，任何人重算都得到同一組數字；
-  repo 內附測試，Fang 與新 agent 兩組範例皆可重現。
-- **分數可以比較嗎？**
-  同職業、同量級之間比較才有意義；
-  不同平台、不同任務量級的 agent 直接比數字會失真，
-  詳見 README 的通用性說明與 roadmap。
+### MCP and file storage
+
+- MCP runs over local stdio, not the network. Still, do not send a
+  profile containing real personal data to an untrusted client, and
+  do not store profile files in a public directory.
+- The public repo holds only code, formulas, and example statistics,
+  no user private data. The Fang example is aggregate counts only.
+
+### GitHub Pages boundary
+
+The Pages site is a static page with no database and no accounts.
+Nothing you enter is recorded. The only thing that ever leaves your
+device is the card image you download yourself.
+
+## FAQ
+
+- **Why is a fresh agent always Lv.1?**
+  Level follows the saved file, not the account or the underlying
+  model. No accumulated file means Lv.1. That is a design decision,
+  not missing data.
+- **Does the underlying model affect the score?**
+  Only through the learning coefficient m, which scales experience
+  gain. It does not change thresholds, dimension formulas, or INT,
+  and it grants no starting experience.
+- **Can a score be verified?**
+  Yes. The same profile plus the same formula version always gives
+  the same numbers, and the repo's tests reproduce both the Fang and
+  the fresh-agent examples.
+- **Can scores be compared?**
+  Meaningfully only within the same profession and task scale.
+  Comparing agents across platforms or task volumes by raw number
+  alone distorts the picture; see the README's generality notes and
+  roadmap.

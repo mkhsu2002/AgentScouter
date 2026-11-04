@@ -34,7 +34,7 @@ class TestFangTrial(unittest.TestCase):
         self.assertEqual(result["intelligence"], 87)
         self.assertEqual(result["xp"], 4520)
         self.assertEqual(result["level"], 10)
-        self.assertEqual(result["title"], "熟手")
+        self.assertEqual(result["title"], "Practitioner")
 
     def test_fang_delivery_range(self):
         profile = load_example("fang_profile.json")
@@ -58,7 +58,7 @@ class TestNewAgent(unittest.TestCase):
         self.assertEqual(result["composite"], 0)
         self.assertEqual(result["xp"], 0)
         self.assertEqual(result["level"], 1)
-        self.assertEqual(result["title"], "學徒")
+        self.assertEqual(result["title"], "Apprentice")
 
 
 class TestLevelCurve(unittest.TestCase):

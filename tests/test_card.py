@@ -27,7 +27,7 @@ FANG_RESULT = {
     "composite": 88,
     "intelligence": 87,
     "level": 10,
-    "title": "熟手",
+    "title": "Practitioner",
 }
 
 
@@ -69,7 +69,7 @@ class TestCard(unittest.TestCase):
             self.assertTrue(os.path.getsize(out) > 0)
 
     def test_card_version_label(self):
-        self.assertEqual(CARD_VERSION_LABEL, "測試版本 v0.01")
+        self.assertEqual(CARD_VERSION_LABEL, "Test version v0.01")
 
 
 if __name__ == "__main__":

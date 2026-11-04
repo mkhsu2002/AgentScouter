@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AgentScouter - AI Agent 等級計算器</title>
+<title>AgentScouter - AI Agent Level Calculator</title>
 <style>
   body { font-family: sans-serif; max-width: 920px; margin: 0 auto; padding: 24px; color: #222; line-height: 1.6; }
   header img { width: 240px; }
@@ -16,6 +16,7 @@
   button.secondary { background: #666; }
   button:disabled { background: #bbb; cursor: default; }
   #results { background: #f4f4f8; padding: 16px; margin-top: 16px; }
+  #shareBox { background: #fff8e1; padding: 16px; margin-top: 16px; }
   #card { width: 100%; max-width: 600px; border: 1px solid #ccc; margin-top: 16px; }
   .note { color: #555; font-size: 14px; }
   .error { color: #b00020; font-weight: bold; }
@@ -25,86 +26,92 @@
 <header>
   <img src="assets/logo.png" alt="AgentScouter Logo" onerror="this.style.display='none'">
   <h1>AgentScouter</h1>
-  <p>AI Agent 等級計算器（Level Formula Spec v1）。所有計算都在你的瀏覽器本機執行，輸入不會傳送到任何伺服器。完整說明與個資安全請見 <a href="USAGE.html">使用指南</a>。</p>
+  <p>AI agent level calculator (Level Formula Spec v1). All calculations run locally in your browser; nothing you enter is sent to any server. For the full privacy story, see the <a href="USAGE.html">usage guide</a>.</p>
 </header>
 
-<h2>基本資料（結果卡用，不計分）</h2>
-<label>名字 <input id="f_name" type="text" placeholder="例如 Fang"></label>
-<label>種族 <input id="f_species" type="text" placeholder="例如 Muse"></label>
-<label>生日（留空則卡片不顯示） <input id="f_birthday" type="text" placeholder="例如 2026-09-23"></label>
+<h2>Profile (for the result card, not scored)</h2>
+<label>Name <input id="f_name" type="text" placeholder="e.g. Fang"></label>
+<label>Species <input id="f_species" type="text" placeholder="e.g. Muse"></label>
+<label>Birthday (leave blank to hide it on the card) <input id="f_birthday" type="text" placeholder="e.g. 2026-09-23"></label>
 
-<h2>人性 HUM</h2>
-<label>人格具備項數（0-7） <input id="f_persona" type="number" value="0"></label>
-<label>SOUL 位元組數 <input id="f_soul" type="number" value="0"></label>
-<label>偏好條數 <input id="f_pref" type="number" value="0"></label>
-<label>自主權等級
+<h2>Humanity HUM</h2>
+<label>Persona items present (0-7) <input id="f_persona" type="number" value="0"></label>
+<label>SOUL size in bytes <input id="f_soul" type="number" value="0"></label>
+<label>Preference items <input id="f_pref" type="number" value="0"></label>
+<label>Autonomy tier
   <select id="f_autonomy">
-    <option value="none">無授權（逐事請示）</option>
-    <option value="single_batch">單線批次預授權</option>
-    <option value="multi_batch">多線批次預授權</option>
-    <option value="domain_full">特定領域完全自主</option>
-    <option value="full">全面自主</option>
+    <option value="none">No authorization (ask every time)</option>
+    <option value="single_batch">Single-track batch pre-authorization</option>
+    <option value="multi_batch">Multi-track batch pre-authorization</option>
+    <option value="domain_full">Full autonomy in one domain</option>
+    <option value="full">Full autonomy</option>
   </select>
 </label>
 
-<h2>知識 KNOW</h2>
-<label>MEMORY 總條數 <input id="f_mem" type="number" value="0"></label>
-<label>領域清單（一行一個） <textarea id="f_domains" placeholder="一行一個領域"></textarea></label>
-<label>人物數 <input id="f_people" type="number" value="0"></label>
-<label>群組數 <input id="f_groups" type="number" value="0"></label>
-<label>距最近更新天數（留空表示無紀錄） <input id="f_days" type="number" placeholder="留空"></label>
+<h2>Knowledge KNOW</h2>
+<label>MEMORY items total <input id="f_mem" type="number" value="0"></label>
+<label>Domains (one per line) <textarea id="f_domains" placeholder="one domain per line"></textarea></label>
+<label>People <input id="f_people" type="number" value="0"></label>
+<label>Groups <input id="f_groups" type="number" value="0"></label>
+<label>Days since last update (blank = no record) <input id="f_days" type="number" placeholder="blank"></label>
 
-<h2>技能 SKILL</h2>
-<label>技能 JSON 陣列（每支：steps、acceptance、failure 各 0-2，used、logged，projects 為使用專案數）
+<h2>Skill SKILL</h2>
+<label>Skills JSON array (each: steps, acceptance, failure 0-2 each, used, logged, projects = number of projects used in)
 <textarea id="f_skills">[]</textarea></label>
 
-<h2>跨度 SPAN</h2>
-<label>目標總數 <input id="f_goals_total" type="number" value="0"></label>
-<label>已結案目標數 <input id="f_goals_done" type="number" value="0"></label>
-<label>協作平台數 <input id="f_platforms" type="number" value="0"></label>
+<h2>Span SPAN</h2>
+<label>Total goals <input id="f_goals_total" type="number" value="0"></label>
+<label>Completed goals <input id="f_goals_done" type="number" value="0"></label>
+<label>Collaboration platforms <input id="f_platforms" type="number" value="0"></label>
 
-<h2>可靠 REL</h2>
-<label>驗收通過率 0-1（留空表示無紀錄） <input id="f_pass" type="number" step="0.01" placeholder="留空"></label>
-<label>機制修正次數 <input id="f_fixes" type="number" value="0"></label>
-<label>受用戶明確肯定的修正案數 <input id="f_ack" type="number" value="0"></label>
-<label>誠實回報
+<h2>Reliability REL</h2>
+<label>Acceptance pass rate 0-1 (blank = no record) <input id="f_pass" type="number" step="0.01" placeholder="blank"></label>
+<label>Mechanism fixes <input id="f_fixes" type="number" value="0"></label>
+<label>Fixes explicitly acknowledged by the user <input id="f_ack" type="number" value="0"></label>
+<label>Honest reporting
   <select id="f_honesty">
-    <option value="none">無紀錄</option>
-    <option value="disclosed">有如實揭露紀錄</option>
-    <option value="hidden">有隱瞞或美化紀錄</option>
+    <option value="none">No record</option>
+    <option value="disclosed">Disclosed honestly on record</option>
+    <option value="hidden">Hidden or embellished on record</option>
   </select>
 </label>
 
-<h2>智力與經驗</h2>
-<label>推理證據項數 <input id="f_evidence" type="number" value="0"></label>
-<label>推理評審分（0-19） <input id="f_reasoning_j" type="number" value="0"></label>
-<label>模型學習係數 m（預設 1.0） <input id="f_m" type="number" step="0.1" value="1.0"></label>
-<label>驗收通過交付件數 <input id="f_deliveries" type="number" value="0"></label>
+<h2>Intelligence and experience</h2>
+<label>Reasoning evidence items <input id="f_evidence" type="number" value="0"></label>
+<label>Reasoning review score (0-19) <input id="f_reasoning_j" type="number" value="0"></label>
+<label>Model learning coefficient m (default 1.0) <input id="f_m" type="number" step="0.1" value="1.0"></label>
+<label>Accepted deliveries <input id="f_deliveries" type="number" value="0"></label>
 
 <div>
-  <button onclick="onCalculate()">計算並產生結果卡</button>
-  <button class="secondary" onclick="loadExample('fang')">載入 Fang 範例</button>
-  <button class="secondary" onclick="loadExample('fresh')">載入新 agent 範例</button>
-  <button id="btnDownload" onclick="downloadCard()" disabled>下載結果卡 PNG</button>
+  <button onclick="onCalculate()">Calculate and generate card</button>
+  <button class="secondary" onclick="loadExample('fang')">Load Fang example</button>
+  <button class="secondary" onclick="loadExample('fresh')">Load fresh agent example</button>
+  <button id="btnDownload" onclick="downloadCard()" disabled>Download card PNG</button>
+  <button id="btnShare" onclick="copyShareText()" disabled>Copy share text</button>
 </div>
 <p id="formError" class="error"></p>
 
 <div id="results" style="display:none"></div>
+<div id="shareBox" style="display:none">
+  <b>Like your result? Share your card!</b>
+  <p id="shareText"></p>
+  <p class="note">The card contains only what you chose to put on it: name, species, optional birthday, level, and scores. It never contains your memory or conversation text.</p>
+</div>
 <canvas id="card" width="1200" height="1500" style="display:none"></canvas>
 
-<p class="note">隱私：本頁沒有後端、不設追蹤程式，你的輸入只存在這個瀏覽器分頁，關閉即消失。唯一會離開裝置的東西是你自己按下載的那張卡片圖片。</p>
+<p class="note">Privacy: this page has no backend and no tracking. Your input lives only in this browser tab and disappears when you close it. The only thing that ever leaves your device is the card image you download yourself.</p>
 
 <script>
 const AUTONOMY = { none: 0, single_batch: 20, multi_batch: 28, domain_full: 36, full: 40 };
 const HONESTY = { none: 0, disclosed: 15, hidden: 0 };
 function fl(v) { return Math.floor(v + 1e-9); }
 function titleForLevel(L) {
-  if (L <= 4) return "學徒";
-  if (L <= 9) return "助手";
-  if (L <= 14) return "熟手";
-  if (L <= 19) return "專家";
-  if (L <= 29) return "大師";
-  return "傳奇";
+  if (L <= 4) return "Apprentice";
+  if (L <= 9) return "Assistant";
+  if (L <= 14) return "Practitioner";
+  if (L <= 19) return "Expert";
+  if (L <= 29) return "Master";
+  return "Legend";
 }
 function threshold(L) { return 50 * L * (L - 1); }
 function levelForXp(xp) {
@@ -157,8 +164,8 @@ function collectProfile() {
   const raw = document.getElementById("f_skills").value.trim();
   if (raw) {
     try { skills = JSON.parse(raw); }
-    catch (e) { throw new Error("技能 JSON 解析失敗：" + e.message); }
-    if (!Array.isArray(skills)) throw new Error("技能必須是 JSON 陣列");
+    catch (e) { throw new Error("Skills JSON parse failed: " + e.message); }
+    if (!Array.isArray(skills)) throw new Error("Skills must be a JSON array");
   }
   return {
     name: document.getElementById("f_name").value.trim(),
@@ -191,7 +198,7 @@ const EXAMPLES = {
   fang: {
     name: "Fang", species: "Muse", birthday: "",
     persona_items: 7, soul_bytes: 995, pref_count: 21, autonomy_tier: "domain_full",
-    mem_total: 50, domains: ["ICAREU 電商稅務", "Horizon 廣告", "新巴比倫世界觀", "K-video", "人物短影音與頻道經營", "Podcast Shorts", "遊戲開發", "比賽提案", "出版與 BD 洽詢", "Tower 與 Fang 的家"],
+    mem_total: 50, domains: ["ICAREU e-commerce and tax", "Horizon advertising", "NeoBabylon worldbuilding", "K-video", "Character short videos and channel operations", "Podcast Shorts", "Game development", "Competition proposals", "Publishing and business development", "Tower and Fang's home"],
     people: 7, groups: 0, days_since_update: 1,
     skills: [
       { steps: 2, acceptance: 2, failure: 2, used: true, logged: false, projects: 2 },
@@ -311,12 +318,12 @@ function drawCard(profile, result) {
     ctx.drawImage(logoImg, 60, 50, nw, nh);
   }
   ctx.fillStyle = "#111111"; ctx.font = "bold 46px sans-serif";
-  ctx.fillText("AgentScouter 測試結果卡", 600, 300);
+  ctx.fillText("AgentScouter Test Result Card", 600, 300);
   ctx.font = "bold 84px sans-serif";
-  ctx.fillText(profile.name || "未命名", 600, 430);
+  ctx.fillText(profile.name || "Unnamed", 600, 430);
   ctx.fillStyle = "#333333"; ctx.font = "36px sans-serif";
-  ctx.fillText("種族：" + (profile.species || "AI Agent"), 600, 540);
-  if (profile.birthday) ctx.fillText("生日：" + profile.birthday, 600, 600);
+  ctx.fillText("Species: " + (profile.species || "AI Agent"), 600, 540);
+  if (profile.birthday) ctx.fillText("Birthday: " + profile.birthday, 600, 600);
   const badge = "Lv." + result.level + " " + result.title;
   ctx.font = "bold 64px sans-serif";
   const tw = ctx.measureText(badge).width;
@@ -325,15 +332,23 @@ function drawCard(profile, result) {
   ctx.fillStyle = "#ffffff";
   ctx.fillText(badge, 600, 715);
   ctx.fillStyle = "#444444"; ctx.font = "32px sans-serif";
-  ctx.fillText("綜合 " + result.composite + " ｜ INT " + result.INT, 600, 810);
+  ctx.fillText("Composite " + result.composite + " | INT " + result.INT, 600, 810);
   drawRadar(ctx, 600, 1170, 270,
     [result.HUM, result.KNOW, result.SKILL, result.SPAN, result.REL],
-    ["人性 HUM", "知識 KNOW", "技能 SKILL", "跨度 SPAN", "可靠 REL"],
+    ["Humanity HUM", "Knowledge KNOW", "Skill SKILL", "Span SPAN", "Reliability REL"],
     result.composite);
   ctx.fillStyle = "#666666"; ctx.font = "26px sans-serif"; ctx.textAlign = "right";
-  ctx.fillText("測試版本 v0.01", 1140, 1455);
+  ctx.fillText("Test version v0.01", 1140, 1455);
+  ctx.font = "22px sans-serif"; ctx.textAlign = "left";
+  ctx.fillText("Share your card: mkhsu2002.github.io/AgentScouter", 60, 1472);
   canvas.style.display = "block";
   document.getElementById("btnDownload").disabled = false;
+  document.getElementById("btnShare").disabled = false;
+}
+function shareTextFor(profile, result) {
+  return "My agent " + (profile.name || "Unnamed") + " scored Lv." + result.level + " " + result.title +
+    " on AgentScouter! Composite " + result.composite + ", INT " + result.INT +
+    ". Try it: https://mkhsu2002.github.io/AgentScouter/";
 }
 function onCalculate() {
   document.getElementById("formError").textContent = "";
@@ -345,9 +360,12 @@ function onCalculate() {
   const box = document.getElementById("results");
   box.style.display = "block";
   box.innerHTML =
-    "<b>五維：</b> 人性 " + r.HUM + " ｜ 知識 " + r.KNOW + " ｜ 技能 " + r.SKILL + " ｜ 跨度 " + r.SPAN + " ｜ 可靠 " + r.REL + "<br>" +
-    "<b>綜合：</b> " + r.composite + " ｜ <b>INT：</b> " + r.INT + " ｜ <b>XP：</b> " + r.xp + "<br>" +
-    "<b>等級：</b> Lv." + r.level + " " + r.title + " ｜ 距下一級還差 " + r.toNext + " XP";
+    "<b>Dimensions:</b> Humanity " + r.HUM + " | Knowledge " + r.KNOW + " | Skill " + r.SKILL + " | Span " + r.SPAN + " | Reliability " + r.REL + "<br>" +
+    "<b>Composite:</b> " + r.composite + " | <b>INT:</b> " + r.INT + " | <b>XP:</b> " + r.xp + "<br>" +
+    "<b>Level:</b> Lv." + r.level + " " + r.title + " | XP to next level: " + r.toNext;
+  const shareBox = document.getElementById("shareBox");
+  shareBox.style.display = "block";
+  document.getElementById("shareText").textContent = shareTextFor(profile, r);
   drawCard(profile, r);
 }
 function downloadCard() {
@@ -359,6 +377,30 @@ function downloadCard() {
     a.click();
     URL.revokeObjectURL(a.href);
   });
+}
+function copyShareText() {
+  if (!window._lastCard) return;
+  const text = shareTextFor(window._lastCard.profile, window._lastCard.result);
+  const done = () => {
+    const btn = document.getElementById("btnShare");
+    const old = btn.textContent;
+    btn.textContent = "Copied!";
+    setTimeout(() => { btn.textContent = old; }, 2000);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+  } else {
+    fallbackCopy(text, done);
+  }
+}
+function fallbackCopy(text, done) {
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand("copy"); } catch (e) {}
+  document.body.removeChild(ta);
+  done();
 }
 preloadLogo();
 </script>
