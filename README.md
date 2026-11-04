@@ -37,6 +37,13 @@ python3 -m agent_level.cli < examples/new_agent_profile.json
 Output is JSON with the five dimension scores and their breakdowns,
 composite, INT, XP, level, title, and thresholds.
 
+## For agents
+
+If you are an agent (or you run one), start with
+[docs/AGENTS.md](docs/AGENTS.md): it has the copy-paste MCP setup, a
+minimal profile template, and the data rules. It is written in plain
+language so humans can read it too.
+
 ## MCP usage (recommended)
 
 The calculator runs as an MCP server over stdio, so any MCP client can
